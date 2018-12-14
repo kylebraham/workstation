@@ -1,0 +1,1 @@
+Scripts to set up worksation. Requires ansible
