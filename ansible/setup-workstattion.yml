@@ -90,7 +90,6 @@
       args:
         warn: false
       
-
     - name: "install chrome"
       become: yes
       dnf:
@@ -305,7 +304,14 @@
        - "{{ oc_contents.files[0].split('/')[0] }}/oc"
        - "{{ minishift_contents.files[0].split('/')[0] }}/minishift"
        - "minikube"
-
+################################################################################
+##########################  ICONS     ##########################################
+################################################################################
+    - name: "Install Papirus"
+      become: yes
+      shell: "wget -qO- https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh | sh"
+      args:
+        warn: false
 ################################################################################
 ########################      CLEANUP     ######################################
 ################################################################################
