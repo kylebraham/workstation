@@ -57,6 +57,7 @@
           - flatpak
           - dnf-plugins-core
           - bat
+          - rust
           - https://releases.hashicorp.com/vagrant/2.1.2/vagrant_2.1.2_x86_64.rpm
         state: present
 
@@ -205,7 +206,6 @@
           - 'libxkbcommon'
         state: present
  
-
     - name: DNF Install Virualbox
       become: yes
       dnf:
