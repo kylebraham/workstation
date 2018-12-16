@@ -210,6 +210,14 @@
         groups: vboxusers
         append: yes
 
+    - name: "Install Vagrant" 
+      unarchive:
+        src: https://releases.hashicorp.com/vagrant/2.2.2/vagrant_2.2.2_linux_amd64.zip
+        dest: .
+        mode: 0774
+        remote_src: yes
+
+
 ################################################################################
 ######################## GITHUB RELEASES  ######################################
 ################################################################################
@@ -271,8 +279,6 @@
         dest: ./minikube
         mode: 0774
 
-
-
     - name: "Move Bins"
       become: yes
       shell: "mv -f ./{{item}}  /usr/local/bin"
@@ -281,6 +287,7 @@
        - "{{ oc_contents.files[0].split('/')[0] }}/oc"
        - "{{ minishift_contents.files[0].split('/')[0] }}/minishift"
        - "minikube"
+       - "vagrant"
 
     - name: "Clean up"
       become: yes 
