@@ -1,0 +1,3 @@
+test_env/.vagrant
+test_env/.vagrant/*
+*.retry
