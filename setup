@@ -3,5 +3,10 @@ set -e
 
 if hash ansible-playbook; then
   ansible-playbook -K ansible/setup-workstattion.yml
-  reboot
+  if [[ $1 != "nr" ]]; then
+    echo "Rebooting ..."
+    sleep 3
+    reboot
+  fi
+
 fi
