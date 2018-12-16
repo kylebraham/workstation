@@ -35,7 +35,7 @@
         value: 'polymorphic92@gmail.com'
 
 ################################################################################
-######################## DNf   #################################################
+######################## DNF   #################################################
 ################################################################################
 
     - name: check for updates (dnf)
@@ -53,6 +53,9 @@
       dnf:
         name: ['tree', 'wget', 'curl', 'vim', 'ranger', 'flatpak','dnf-plugins-core','bat']
         state: present
+######################################################################################
+##########################  VSCODE ###################################################
+######################################################################################
 
     - name: "Import Vscode key"
       become: yes
@@ -61,7 +64,7 @@
     - name: "Add vscode yum repo"
       become: yes
       shell:  sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
-      
+       
     - name: "update package cache"
       become: yes
       shell: "dnf check-update"
@@ -69,11 +72,7 @@
     - name: "install vscode"
       become: yes
       dnf:
-       name: code 
-
-  # - name: "Import Vscode key"
-      #  become: yes
-      #      shell: "rpm --import https://packages.microsoft.com/keys/microsoft.asc"
+       name: code
      
 ################################################################################
 ########################  Flatpaks  ############################################
