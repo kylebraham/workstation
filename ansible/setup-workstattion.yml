@@ -29,6 +29,7 @@
         name: user.name
         scope: global
         value: 'polymorphic92'
+
     - git_config:
         name: user.email
         scope: global
@@ -37,10 +38,6 @@
 ################################################################################
 ######################## DNF   #################################################
 ################################################################################
-
-    - name: check for updates (dnf)
-      dnf: list=updates
-      register: dnfoutput
 
     - name: DNF upgrade all packages
       become: yes
@@ -51,33 +48,40 @@
     - name: DNF Install items
       become: yes
       dnf:
-        name: ['tree', 'wget', 'curl', 'vim', 'ranger', 'flatpak','dnf-plugins-core','bat']
+        name: 
+          - tree
+          - wget
+          - curl 
+          - vim 
+          - ranger 
+          - flatpak
+          - dnf-plugins-core
+          - bat
+          - https://releases.hashicorp.com/vagrant/2.1.2/vagrant_2.1.2_x86_64.rpm
         state: present
-######################################################################################
-##########################  VSCODE ###################################################
-######################################################################################
 
-    - name: "Import Vscode key"
+################################################################################
+##########################  VSCODE #############################################
+################################################################################
+
+    - name: "Install Vscode"
       become: yes
-      shell: "rpm --import https://packages.microsoft.com/keys/microsoft.asc"
-     
-    - name: "Add vscode yum repo"
-      become: yes
-      shell:  sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
-       
-    - name: "update package cache"
-      become: yes
-      shell: "dnf check-update"
+      shell: "{{item}}"
+      args:
+        warn: false
+      with_items:
+        - rpm --import https://packages.microsoft.com/keys/microsoft.asc
+        - sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
+        - dnf check-update
 
     - name: "install vscode"
       become: yes
       dnf:
        name: code
-     
+       
 ################################################################################
 ########################  Flatpaks  ############################################
 ################################################################################
-
 
     - name: Add the Gnome flatpak remote to the system installation
       flatpak_remote:
@@ -94,7 +98,7 @@
         method: user
 
     - name: Install Flatpaks
-      command: flatpak install --assumeyes flathub {{ item }}
+      command: flatpak install --assumeyes --user flathub {{ item }}
       with_items:
         - com.spotify.Client
         - com.slack.Slack
@@ -107,7 +111,17 @@
     - name: remove Older versions of Docker
       become: yes
       dnf:
-        name: ['docker','docker-client','docker-client-latest','docker-common','docker-latest','docker-latest-logrotate','docker-logrotate','docker-selinux','docker-engine-selinux','docker-engine']
+        name: 
+          - 'docker'
+          - 'docker-client'
+          - 'docker-client-latest'
+          - 'docker-common'
+          - 'docker-latest'
+          - 'docker-latest-logrotate'
+          - 'docker-logrotate'
+          - 'docker-selinux'
+          - 'docker-engine-selinux'
+          - 'docker-engine'
         state: absent
 
     - name: Add docker repo
@@ -210,19 +224,9 @@
         groups: vboxusers
         append: yes
 
-    - name: "Install Vagrant" 
-      unarchive:
-        src: https://releases.hashicorp.com/vagrant/2.2.2/vagrant_2.2.2_linux_amd64.zip
-        dest: .
-        mode: 0774
-        remote_src: yes
-
-
 ################################################################################
 ######################## GITHUB RELEASES  ######################################
 ################################################################################
-
-
 
     - uri:                                                               
         url: https://api.github.com/repos/istio/istio/releases/latest
@@ -243,8 +247,6 @@
         url: https://api.github.com/repos/kubernetes/minikube/releases/latest
         return_content: true
       register: minikube_latest
-
-
 
     - name: "Download Istio"
       become: yes
@@ -287,7 +289,10 @@
        - "{{ oc_contents.files[0].split('/')[0] }}/oc"
        - "{{ minishift_contents.files[0].split('/')[0] }}/minishift"
        - "minikube"
-       - "vagrant"
+
+################################################################################
+########################      CLEANUP     ######################################
+################################################################################
 
     - name: "Clean up"
       become: yes 
@@ -299,9 +304,6 @@
        - "{{ oc_contents.files[0].split('/')[0] }}"
        - "{{ minishift_contents.files[0].split('/')[0] }}" 
 
- 
-
 ################################################################################
 ################################################################################
 ################################################################################
-
