@@ -66,7 +66,7 @@
 ##########################  VSCODE #############################################
 ################################################################################
 
-    - name: "Install Vscode"
+    - name: "Add Vscode"
       become: yes
       shell: "{{item}}"
       args:
@@ -76,7 +76,7 @@
         - sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
         - dnf check-update
 
-    - name: "install vscode"
+    - name: "install Vscode"
       become: yes
       dnf:
        name: code
