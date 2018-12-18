@@ -13,6 +13,7 @@
         - repos
         - sandbox
         - tools
+        - .local/share/fonts
 
 ################################################################################
 ############################### GIT ############################################
@@ -313,6 +314,13 @@
       shell: "wget -qO- https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh | sh"
       args:
         warn: false
+
+    - name: "Download Nerd Font Complete"
+      get_url:
+        url: "https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/DroidSansMono/complete/Droid%20Sans%20Mono%20Nerd%20Font%20Complete.otf"
+        dest: /home/{{ ansible_user_id }}/.local/share/fonts/Droid Sans Mono for Powerline Nerd Font Complete.otf
+        mode: 0774
+
 ################################################################################
 ########################      CLEANUP     ######################################
 ################################################################################
