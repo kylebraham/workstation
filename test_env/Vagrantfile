@@ -3,7 +3,6 @@
 
 Vagrant.configure("2") do |config|
 
-
   config.vm.box = "generic/fedora29"
   config.ssh.forward_agent = true
   config.vm.provision "shell", inline: "dnf install git ansible -y"

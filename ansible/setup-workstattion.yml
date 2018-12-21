@@ -316,10 +316,15 @@
         warn: false
 
     - name: "Download Nerd Font Complete"
+      become: yes
       get_url:
         url: "https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/DroidSansMono/complete/Droid%20Sans%20Mono%20Nerd%20Font%20Complete.otf"
-        dest: /home/{{ ansible_user_id }}/.local/share/fonts/Droid Sans Mono for Powerline Nerd Font Complete.otf
+        dest: /usr/share/fonts/Droid Sans Mono for Powerline Nerd Font Complete.otf
         mode: 0774
+
+    - name: "Run fc-cache"
+      become: yes
+      shell: "fc-cache -f -v"
 
 ################################################################################
 ########################      CLEANUP     ######################################
