@@ -124,7 +124,7 @@
       with_items:
         - com.spotify.Client
         - com.slack.Slack
-        # - com.bitwarden.desktop
+        - com.bitwarden.desktop
 
 ################################################################################
 ########################  DOCKER    ############################################
