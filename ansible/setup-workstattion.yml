@@ -65,6 +65,7 @@
           - gnome-tweak-tool
           - xclip
           - jq
+          - fzf
 
         state: present
 
