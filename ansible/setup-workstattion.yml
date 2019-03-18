@@ -66,6 +66,7 @@
           - xclip
           - jq
           - fzf
+          - fish
 
         state: present
 
