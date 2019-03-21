@@ -67,6 +67,7 @@
           - jq
           - fzf
           - fish
+          - tilix
 
         state: present
 
