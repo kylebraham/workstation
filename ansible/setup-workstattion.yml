@@ -54,13 +54,13 @@
           - wget
           - curl 
           - vim 
-          - ranger 
+          - ripgrep 
           - flatpak
           - dnf-plugins-core
           - bat
           - rust
           - golang
-          - https://releases.hashicorp.com/vagrant/2.1.2/vagrant_2.1.2_x86_64.rpm
+          - https://releases.hashicorp.com/vagrant/2.2.8/vagrant_2.2.8_x86_64.rpm
           - fedora-workstation-repositories
           - gnome-tweak-tool
           - xclip
@@ -68,6 +68,7 @@
           - fzf
           - fish
           - tilix
+          - podman 
 
         state: present
 
