@@ -12,7 +12,7 @@
       with_items:
         - repos
         - sandbox
-        - tools
+        - scripts
         - .local/share/fonts
 
 ################################################################################
