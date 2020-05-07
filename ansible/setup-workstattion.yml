@@ -264,17 +264,7 @@
         url: https://api.github.com/repos/istio/istio/releases/latest
         return_content: true    
       register: istio_latest
-
-    - uri:
-        url: https://api.github.com/repos/openshift/origin/releases/latest
-        return_content: true
-      register: oc_latest
     
-    - uri:
-        url: https://api.github.com/repos/minishift/minishift/releases/latest
-        return_content: true
-      register: minishift_latest
-
     - uri:
         url: https://api.github.com/repos/kubernetes/minikube/releases/latest
         return_content: true
@@ -289,24 +279,6 @@
        list_files: yes
       register: istio_contents
 
-    - name: "Download oc"
-      become: yes
-      unarchive:
-        src: "{{ oc_latest | json_query('json.assets[1].browser_download_url') }}"
-        dest: . 
-        remote_src: yes
-        list_files: yes
-      register: oc_contents
-
-    - name: "Download minishift"
-      become: yes
-      unarchive:
-        src: "{{ minishift_latest | json_query('json.assets[2].browser_download_url') }}"
-        dest: .
-        remote_src: yes
-        list_files: yes
-      register: minishift_contents
-
     - name: "Download minikube"
       get_url:
         url: "{{ minikube_latest | json_query('json.assets[0].browser_download_url') }}"
@@ -318,9 +290,9 @@
       shell: "mv -f ./{{item}}  /usr/local/bin"
       with_items:
        - "{{ istio_contents.files[0].split('/')[0] }}/bin/istioctl"
-       - "{{ oc_contents.files[0].split('/')[0] }}/oc"
-       - "{{ minishift_contents.files[0].split('/')[0] }}/minishift"
        - "minikube"
+
+
 ################################################################################
 ##########################  ICONS     ##########################################
 ################################################################################
@@ -352,8 +324,6 @@
         path: "./{{item}}/"
       with_items:
        - "{{ istio_contents.files[0].split('/')[0] }}"
-       - "{{ oc_contents.files[0].split('/')[0] }}"
-       - "{{ minishift_contents.files[0].split('/')[0] }}" 
       
 ################################################################################
 ################################################################################
