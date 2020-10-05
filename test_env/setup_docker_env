@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-tag='wsf29'
+tag='wsf32'
 if ! docker images | grep -q $tag; then 
    echo "Buliding  test docker image"
    docker build . -t $tag

@@ -1,5 +1,6 @@
-FROM fedora:29
+FROM fedora:32
 WORKDIR /root
-RUN dnf update --refresh -y && \
-    dnf install git ansible -y
+# COPY ../ansible /ansible
+# RUN dnf update --refresh -y && \
+RUN dnf install git ansible -y
 CMD "bash"
