@@ -142,6 +142,8 @@
         - com.spotify.Client
         - com.slack.Slack
         - com.bitwarden.desktop
+        - org.keepassxc.KeePassXC
+        - com.getpostman.Postman
 
 ################################################################################
 ########################  DOCKER    ############################################
