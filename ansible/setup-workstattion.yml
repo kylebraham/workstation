@@ -32,7 +32,8 @@
           - wget
           - git
           - curl 
-          - vim 
+          - vim
+          - neovim
           - ripgrep
           - dnf-plugins-core
           - bat
@@ -47,6 +48,7 @@
           - podman
           - grubby
           - lsd
+          - NetworkManager
         state: present
 
 ################################################################################
@@ -222,7 +224,7 @@
         src: https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
         dest: /usr/local/bin
         remote_src: yes
-        
+
 ################################################################################
 ##########################  Helm      ##########################################
 ################################################################################
