@@ -149,6 +149,15 @@
 ########################  DOCKER    ############################################
 ################################################################################
 
+
+    - name: "Cgroups Exception: For Fedora 31 and higher via grubby"
+      become: yes
+      shell: "{{item}}"
+      args:
+        warn: false
+      with_items:
+        - grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=0"
+
     - name: remove Older versions of Docker
       become: yes
       dnf:
@@ -171,16 +180,10 @@
       args:
         warn: no
 
-    - name: Configure Docker repo to use test
-      become: yes
-      command:  'dnf config-manager --set-enabled docker-ce-test'
-      args:
-        warn: no
-
     - name:  Install docker-ce and docker-compose 
       become: yes
       dnf:
-        name: ['docker-ce','docker-compose']
+        name: ['docker-ce','docker-ce-cli','containerd.io','docker-compose']
         state: present
 
     - name: "Add  {{ ansible_user_id }} to docker group"
@@ -196,6 +199,8 @@
         state: started
         name: docker
         enabled: yes
+
+
 
 ################################################################################
 ########################  K8        ############################################
