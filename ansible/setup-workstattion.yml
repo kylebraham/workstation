@@ -1,6 +1,13 @@
 ---
 - hosts: localhost
+  vars:
+    work_file_name: "work.yml"
   tasks:
+    - name: Get fedora version
+      shell: rpm -E %fedora
+      register: fv
+    - set_fact: fedora_current={{ fv.stdout }}
+
     ################################################################################
     ######################## CREATE DIRS ###########################################
     ################################################################################
@@ -14,9 +21,63 @@
         - sandbox
         - scripts
         - .local/share/fonts
+
     ################################################################################
     ######################## Add package repos #####################################
     ################################################################################
+
+    - name: Install {{ fedora_current }} rpmfusion repo packages
+      become: yes
+      dnf:
+        name: "{{ item }}"
+        state: present
+        disable_gpg_check: true
+      with_items:
+        - https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedora_current }}.noarch.rpm
+        - https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedora_current }}.noarch.rpm
+
+    - name: Import kubectl gpg key
+      become: yes
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+
+    - name: Add kubectl repo
+      become: yes
+      yum_repository:
+        name: Kubernetes
+        description: Kubernetes YUM repo
+        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+        gpgcheck: yes
+        gpgkey: https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+
+    - name: Import packages.microsoft gpg key
+      become: yes
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://packages.microsoft.com/keys/microsoft.asc
+
+    - name: Add MS vscode repo
+      become: yes
+      yum_repository:
+        name: vscode
+        description: Visual Studio Code
+        baseurl: https://packages.microsoft.com/yumrepos/vscode
+        gpgcheck: yes
+        gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+
+    - name: Import docker gpg key
+      become: yes
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://download.docker.com/linux/fedora/gpg
+        fingerprint: 060A 61C5 1B55 8A7F 742B 77AA C52F EB6B 621E 9F35
+
+    - name: Fetch Docker .repo file
+      become: yes
+      get_url:
+        url: https://download.docker.com/linux/fedora/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
 
     ################################################################################
     ######################## DNF   #################################################
@@ -28,6 +89,20 @@
         name: "*"
         state: latest
 
+    - name: Install the 'multimedia' package group
+      become: yes
+      dnf:
+        name: "@multimedia"
+        state: present
+        exclude: PackageKit-gstreamer-plugin
+        install_weak_deps: false
+
+    - name: Install the 'sound-and-video' package group
+      become: yes
+      dnf:
+        name: "@sound-and-video"
+        state: present
+
     - name: DNF Install items
       become: yes
       dnf:
@@ -38,6 +113,7 @@
           - neovim
           - ripgrep
           - dnf-plugins-core
+          - python3-pip
           - bat
           - golang
           - fedora-workstation-repositories
@@ -48,15 +124,34 @@
           - fish
           - tilix
           - podman
+          - buildah
           - lsd
           - NetworkManager
           - git-delta
           - direnv
+          - openssl
+          - openssl-devel
+          - restic
+          # From other repos:
+          - code
+          - kubectl
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+          # VA-API Video decoding on Intel
+          - intel-media-driver
+          - libva
+          - libva-utils
+          - libva-intel-driver
+          - ffmpeg
+          - ffmpeg-libs
         state: present
 
     ################################################################################
-    ############################### GIT ############################################
+    ############################### GIT SETUP ######################################
     ################################################################################
+
     - git:
         repo: "https://github.com/polymorphic92/dotfiles.git"
         dest: /home/{{ ansible_user_id }}/dotfiles
@@ -72,112 +167,27 @@
         value: "polymorphic92@gmail.com"
 
     ################################################################################
-    ##########################  VSCODE #############################################
-    ################################################################################
-
-    - name: "Add Vscode"
-      become: yes
-      shell: "{{item}}"
-      args:
-        warn: false
-      with_items:
-        - rpm --import https://packages.microsoft.com/keys/microsoft.asc
-        - sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
-        - dnf check-update
-
-    - name: "install Vscode"
-      become: yes
-      dnf:
-        name: code
-
-    ################################################################################
-    ######################## CHROME ################################################
-    ################################################################################
-
-    # - name: "Enable chrome"
-    #   become: yes
-    #   shell: "dnf config-manager --set-enabled google-chrome"
-    #   args:
-    #     warn: false
-
-    # - name: "install chrome"
-    #   become: yes
-    #   dnf:
-    #     name: google-chrome-stable
-
-    ################################################################################
-    ######################## Script install ########################################
-    ################################################################################
-
-    - name: "Script installs"
-      become: yes
-      shell: "{{item}}"
-      args:
-        warn: false
-      with_items:
-        - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
-        - curl -fsSL https://starship.rs/install.sh | bash -s -- -y
-
-    ################################################################################
     ########################  Flatpaks  ############################################
     ################################################################################
 
-    - name: Add the Gnome flatpak remote to the system installation
-      flatpak_remote:
-        name: gnome
-        state: present
-        flatpakrepo_url: https://sdk.gnome.org/gnome-apps.flatpakrepo
-        method: user
-
     - name: Add the flathub flatpak repository remote to the user installation
-      flatpak_remote:
-        name: flathub
-        state: present
-        flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
-        method: user
+      ansible.builtin.shell: flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
 
     - name: Install Flatpaks
-      command: flatpak install --assumeyes --user flathub {{ item }}
-      with_items:
-        - com.spotify.Client
-        - com.bitwarden.desktop
-        - org.keepassxc.KeePassXC
-        - com.getpostman.Postman
-        - flathub io.dbeaver.DBeaverCommunity
+      community.general.flatpak:
+        method: user
+        name:
+          - com.bitwarden.desktop
+          - org.wezfurlong.wezterm
+          - com.github.tchx84.Flatseal
+          - org.fedoraproject.MediaWriter
+          - com.google.Chrome
 
     ################################################################################
     ########################  DOCKER    ############################################
     ################################################################################
 
-    - name: remove Older versions of Docker
-      become: yes
-      dnf:
-        name:
-          - "docker"
-          - "docker-client"
-          - "docker-client-latest"
-          - "docker-common"
-          - "docker-latest"
-          - "docker-latest-logrotate"
-          - "docker-logrotate"
-          - "docker-selinux"
-          - "docker-engine-selinux"
-          - "docker-engine"
-        state: absent
-
-    - name: Add docker repo
-      become: yes
-      command: "dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo"
-      args:
-        warn: no
-
-    - name: Install docker-ce and docker-compose
-      become: yes
-      dnf:
-        name: ["docker-ce", "docker-ce-cli", "containerd.io", "docker-compose"]
-        state: present
-
-    - name: "Add  {{ ansible_user_id }} to docker group"
+    - name: "Add {{ ansible_user_id }} to docker group"
       become: yes
       user:
         name: "{{ ansible_user_id }}"
@@ -192,78 +202,8 @@
         enabled: yes
 
     ################################################################################
-    ########################  K8        ############################################
+    ##########################  FONTS     ##########################################
     ################################################################################
-
-    - name: Add k8 repo
-      become: yes
-      yum_repository:
-        name: Kubernetes
-        description: Kubernetes YUM repo
-        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
-        gpgcheck: yes
-        repo_gpgcheck: yes
-        gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-
-    - name: Install kubectl
-      become: yes
-      dnf:
-        name: ["kubectl"]
-        state: present
-
-    ################################################################################
-    ########################  oc        ############################################
-    ################################################################################
-    - name: Download and unarchive OC cli
-      unarchive:
-        src: https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
-        dest: /usr/local/bin
-        remote_src: yes
-
-    ################################################################################
-    ######################## GITHUB RELEASES  ######################################
-    ################################################################################
-
-    # - uri:
-    #     url: https://api.github.com/repos/istio/istio/releases/latest
-    #     return_content: true
-    #   register: istio_latest
-
-    - uri:
-        url: https://api.github.com/repos/kubernetes/minikube/releases/latest
-        return_content: true
-      register: minikube_latest
-
-    # - name: "Download Istio"
-    #   become: yes
-    #   unarchive:
-    #     src: "{{ istio_latest | json_query('json.assets[0].browser_download_url') }}"
-    #     dest: .
-    #     remote_src: yes
-    #     list_files: yes
-    #   register: istio_contents
-
-    - name: "Download minikube"
-      get_url:
-        url: "{{ minikube_latest | json_query('json.assets[0].browser_download_url') }}"
-        dest: ./minikube
-        mode: 0774
-
-    - name: "Move Bins"
-      become: yes
-      shell: "mv -f ./{{item}}  /usr/local/bin"
-      with_items:
-        # - "{{ istio_contents.files[0].split('/')[0] }}/bin/istioctl"
-        - "minikube"
-
-    ################################################################################
-    ##########################  ICONS     ##########################################
-    ################################################################################
-    - name: "Install Papirus"
-      become: yes
-      shell: "wget -qO- https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh | sh"
-      args:
-        warn: false
 
     - name: "Download Nerd Font Complete"
       become: yes
@@ -272,21 +212,28 @@
         dest: /usr/share/fonts/Droid Sans Mono for Powerline Nerd Font Complete.otf
         mode: 0774
 
-    - name: "Run fc-cache"
-      become: yes
-      shell: "fc-cache -f -v"
-
     ################################################################################
-    ########################      CLEANUP     ######################################
+    ######################## RAW Script Installs ###################################
     ################################################################################
 
-    - name: "Clean up"
-      become: yes
-      file:
-        state: absent
-        path: "./{{item}}/"
-      with_items:
-        - "{{ istio_contents.files[0].split('/')[0] }}"
-################################################################################
-################################################################################
-################################################################################
+    - name: "Script installs"
+      ansible.builtin.shell: |
+        ## unsupported dnf items ##
+        dnf group upgrade --with-optional Multimedia -y 
+
+        ## Install rustup ##
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+        curl -fsSL https://starship.rs/install.sh | sh -s -- -y
+
+        ## Install Papirus ##
+        wget -qO- https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh | sh
+        fc-cache -f -v
+
+        ## Install(s) via cargo ##
+        source "$HOME/.cargo/env"
+        cargo install bottom --locked
+
+    - name: "Include {{ work_file_name }} file if it exists"
+      ansible.builtin.include_tasks:
+        file: "{{ work_file_name }}"
+      when: "work_file_name is file"

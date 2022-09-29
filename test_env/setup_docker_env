@@ -1,12 +1,12 @@
 #!/bin/bash
 set -e
 
-tag='wsf32'
-if ! docker images | grep -q $tag; then 
-   echo "Buliding  test docker image"
-   docker build . -t $tag
-else 
-  echo "Docker image: $tag exists" 
+tag='ansilbe-workstation'
+if ! docker images | grep -q $tag; then
+  echo "Buliding  test docker image"
+  docker build . -t $tag
+else
+  echo "Docker image: $tag exists"
 fi
 
-docker run -it --rm -v $(echo "$PWD/../ansible"):/ansible $tag bash 
+docker run -it --rm -v $(echo "$PWD/../ansible"):/ansible $tag bash

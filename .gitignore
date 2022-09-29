@@ -2,3 +2,4 @@ test_env/.vagrant
 test_env/.vagrant/*
 *.retry
 TODO.md
+ansible/work.yml
