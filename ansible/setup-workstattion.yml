@@ -225,24 +225,24 @@
     ######################## GITHUB RELEASES  ######################################
     ################################################################################
 
-    - uri:
-        url: https://api.github.com/repos/istio/istio/releases/latest
-        return_content: true
-      register: istio_latest
+    # - uri:
+    #     url: https://api.github.com/repos/istio/istio/releases/latest
+    #     return_content: true
+    #   register: istio_latest
 
     - uri:
         url: https://api.github.com/repos/kubernetes/minikube/releases/latest
         return_content: true
       register: minikube_latest
 
-    - name: "Download Istio"
-      become: yes
-      unarchive:
-        src: "{{ istio_latest | json_query('json.assets[0].browser_download_url') }}"
-        dest: .
-        remote_src: yes
-        list_files: yes
-      register: istio_contents
+    # - name: "Download Istio"
+    #   become: yes
+    #   unarchive:
+    #     src: "{{ istio_latest | json_query('json.assets[0].browser_download_url') }}"
+    #     dest: .
+    #     remote_src: yes
+    #     list_files: yes
+    #   register: istio_contents
 
     - name: "Download minikube"
       get_url:
@@ -254,7 +254,7 @@
       become: yes
       shell: "mv -f ./{{item}}  /usr/local/bin"
       with_items:
-        - "{{ istio_contents.files[0].split('/')[0] }}/bin/istioctl"
+        # - "{{ istio_contents.files[0].split('/')[0] }}/bin/istioctl"
         - "minikube"
 
     ################################################################################
