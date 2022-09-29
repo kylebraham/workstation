@@ -1,9 +1,9 @@
 ---
 - hosts: localhost
   tasks:
-################################################################################
-######################## CREATE DIRS ###########################################
-################################################################################
+    ################################################################################
+    ######################## CREATE DIRS ###########################################
+    ################################################################################
 
     - file:
         path: /home/{{ ansible_user_id }}/{{ item }}
@@ -14,10 +14,13 @@
         - sandbox
         - scripts
         - .local/share/fonts
+    ################################################################################
+    ######################## Add package repos #####################################
+    ################################################################################
 
-################################################################################
-######################## DNF   #################################################
-################################################################################
+    ################################################################################
+    ######################## DNF   #################################################
+    ################################################################################
 
     - name: DNF upgrade all packages
       become: yes
@@ -28,10 +31,10 @@
     - name: DNF Install items
       become: yes
       dnf:
-        name: 
+        name:
           - wget
           - git
-          - curl 
+          - curl
           - vim
           - neovim
           - ripgrep
@@ -46,34 +49,32 @@
           - fish
           - tilix
           - podman
-          - grubby
           - lsd
           - NetworkManager
+          - git-delta
+          - direnv
         state: present
 
-################################################################################
-############################### GIT ############################################
-################################################################################
+    ################################################################################
+    ############################### GIT ############################################
+    ################################################################################
     - git:
-        repo: 'https://github.com/polymorphic92/dotfiles.git'
+        repo: "https://github.com/polymorphic92/dotfiles.git"
         dest: /home/{{ ansible_user_id }}/dotfiles
-    - git:
-        repo: 'https://github.com/polymorphic92/dockerfiles.git'
-        dest: /home/{{ ansible_user_id }}/dockerfiles
 
     - git_config:
         name: user.name
         scope: global
-        value: 'polymorphic92'
+        value: "polymorphic92"
 
     - git_config:
         name: user.email
         scope: global
-        value: 'polymorphic92@gmail.com'
+        value: "polymorphic92@gmail.com"
 
-################################################################################
-##########################  VSCODE #############################################
-################################################################################
+    ################################################################################
+    ##########################  VSCODE #############################################
+    ################################################################################
 
     - name: "Add Vscode"
       become: yes
@@ -88,26 +89,26 @@
     - name: "install Vscode"
       become: yes
       dnf:
-       name: code
+        name: code
 
-################################################################################
-######################## CHROME ################################################
-################################################################################
+    ################################################################################
+    ######################## CHROME ################################################
+    ################################################################################
 
-    - name: "Enable chrome"
-      become: yes
-      shell: "dnf config-manager --set-enabled google-chrome"
-      args:
-        warn: false
-      
-    - name: "install chrome"
-      become: yes
-      dnf:
-       name: google-chrome-stable
+    # - name: "Enable chrome"
+    #   become: yes
+    #   shell: "dnf config-manager --set-enabled google-chrome"
+    #   args:
+    #     warn: false
 
-################################################################################
-######################## Script install ########################################
-################################################################################
+    # - name: "install chrome"
+    #   become: yes
+    #   dnf:
+    #     name: google-chrome-stable
+
+    ################################################################################
+    ######################## Script install ########################################
+    ################################################################################
 
     - name: "Script installs"
       become: yes
@@ -118,16 +119,16 @@
         - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
         - curl -fsSL https://starship.rs/install.sh | bash -s -- -y
 
-################################################################################
-########################  Flatpaks  ############################################
-################################################################################
+    ################################################################################
+    ########################  Flatpaks  ############################################
+    ################################################################################
 
     - name: Add the Gnome flatpak remote to the system installation
       flatpak_remote:
         name: gnome
         state: present
         flatpakrepo_url: https://sdk.gnome.org/gnome-apps.flatpakrepo
-        method: user  
+        method: user
 
     - name: Add the flathub flatpak repository remote to the user installation
       flatpak_remote:
@@ -140,50 +141,41 @@
       command: flatpak install --assumeyes --user flathub {{ item }}
       with_items:
         - com.spotify.Client
-        - com.slack.Slack
         - com.bitwarden.desktop
         - org.keepassxc.KeePassXC
         - com.getpostman.Postman
+        - flathub io.dbeaver.DBeaverCommunity
 
-################################################################################
-########################  DOCKER    ############################################
-################################################################################
-
-
-    - name: "Cgroups Exception: For Fedora 31 and higher via grubby"
-      become: yes
-      shell: "{{item}}"
-      args:
-        warn: false
-      with_items:
-        - grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=0"
+    ################################################################################
+    ########################  DOCKER    ############################################
+    ################################################################################
 
     - name: remove Older versions of Docker
       become: yes
       dnf:
-        name: 
-          - 'docker'
-          - 'docker-client'
-          - 'docker-client-latest'
-          - 'docker-common'
-          - 'docker-latest'
-          - 'docker-latest-logrotate'
-          - 'docker-logrotate'
-          - 'docker-selinux'
-          - 'docker-engine-selinux'
-          - 'docker-engine'
+        name:
+          - "docker"
+          - "docker-client"
+          - "docker-client-latest"
+          - "docker-common"
+          - "docker-latest"
+          - "docker-latest-logrotate"
+          - "docker-logrotate"
+          - "docker-selinux"
+          - "docker-engine-selinux"
+          - "docker-engine"
         state: absent
 
     - name: Add docker repo
       become: yes
-      command:  'dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo'
+      command: "dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo"
       args:
         warn: no
 
-    - name:  Install docker-ce and docker-compose 
+    - name: Install docker-ce and docker-compose
       become: yes
       dnf:
-        name: ['docker-ce','docker-ce-cli','containerd.io','docker-compose']
+        name: ["docker-ce", "docker-ce-cli", "containerd.io", "docker-compose"]
         state: present
 
     - name: "Add  {{ ansible_user_id }} to docker group"
@@ -200,11 +192,9 @@
         name: docker
         enabled: yes
 
-
-
-################################################################################
-########################  K8        ############################################
-################################################################################
+    ################################################################################
+    ########################  K8        ############################################
+    ################################################################################
 
     - name: Add k8 repo
       become: yes
@@ -219,37 +209,36 @@
     - name: Install kubectl
       become: yes
       dnf:
-        name: [ 'kubectl'] 
+        name: ["kubectl"]
         state: present
 
-
-################################################################################
-########################  oc        ############################################
-################################################################################
-    - name: Download and unarchive OC cli 
+    ################################################################################
+    ########################  oc        ############################################
+    ################################################################################
+    - name: Download and unarchive OC cli
       unarchive:
         src: https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
         dest: /usr/local/bin
         remote_src: yes
 
-################################################################################
-##########################  Helm      ##########################################
-################################################################################
+    ################################################################################
+    ##########################  Helm      ##########################################
+    ################################################################################
     - name: Download and unarchive Helm
       unarchive:
         src: https://get.helm.sh/helm-v3.3.4-linux-amd64.tar.gz
         dest: /usr/local/bin
         remote_src: yes
 
-################################################################################
-######################## GITHUB RELEASES  ######################################
-################################################################################
+    ################################################################################
+    ######################## GITHUB RELEASES  ######################################
+    ################################################################################
 
-    - uri:                                                               
+    - uri:
         url: https://api.github.com/repos/istio/istio/releases/latest
-        return_content: true    
+        return_content: true
       register: istio_latest
-    
+
     - uri:
         url: https://api.github.com/repos/kubernetes/minikube/releases/latest
         return_content: true
@@ -258,10 +247,10 @@
     - name: "Download Istio"
       become: yes
       unarchive:
-       src: "{{ istio_latest | json_query('json.assets[0].browser_download_url') }}"
-       dest: .
-       remote_src: yes
-       list_files: yes
+        src: "{{ istio_latest | json_query('json.assets[0].browser_download_url') }}"
+        dest: .
+        remote_src: yes
+        list_files: yes
       register: istio_contents
 
     - name: "Download minikube"
@@ -274,12 +263,12 @@
       become: yes
       shell: "mv -f ./{{item}}  /usr/local/bin"
       with_items:
-       - "{{ istio_contents.files[0].split('/')[0] }}/bin/istioctl"
-       - "minikube"
+        - "{{ istio_contents.files[0].split('/')[0] }}/bin/istioctl"
+        - "minikube"
 
-################################################################################
-##########################  ICONS     ##########################################
-################################################################################
+    ################################################################################
+    ##########################  ICONS     ##########################################
+    ################################################################################
     - name: "Install Papirus"
       become: yes
       shell: "wget -qO- https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh | sh"
@@ -297,18 +286,17 @@
       become: yes
       shell: "fc-cache -f -v"
 
-################################################################################
-########################      CLEANUP     ######################################
-################################################################################
+    ################################################################################
+    ########################      CLEANUP     ######################################
+    ################################################################################
 
     - name: "Clean up"
-      become: yes 
+      become: yes
       file:
         state: absent
         path: "./{{item}}/"
       with_items:
-       - "{{ istio_contents.files[0].split('/')[0] }}"
-      
+        - "{{ istio_contents.files[0].split('/')[0] }}"
 ################################################################################
 ################################################################################
 ################################################################################
