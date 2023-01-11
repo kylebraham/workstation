@@ -3,6 +3,11 @@
   vars:
     work_file_name: "work.yml"
   tasks:
+    - name: Workstation setup
+      become: yes
+      ansible.builtin.debug:
+        msg: Workstation setup
+
     - name: Get fedora version
       shell: rpm -E %fedora
       register: fv
@@ -117,7 +122,7 @@
           - bat
           - golang
           - fedora-workstation-repositories
-          - gnome-tweak-tool
+          # - gnome-tweak-tool
           - xclip
           - jq
           - fzf
@@ -132,6 +137,7 @@
           - openssl
           - openssl-devel
           - restic
+          - util-linux-user
           # From other repos:
           - code
           - kubectl
@@ -182,6 +188,7 @@
           - com.github.tchx84.Flatseal
           - org.fedoraproject.MediaWriter
           - com.google.Chrome
+          - org.gnome.Extensions
 
     ################################################################################
     ########################  DOCKER    ############################################
@@ -215,12 +222,17 @@
     ################################################################################
     ######################## RAW Script Installs ###################################
     ################################################################################
-
-    - name: "Script installs"
+    - name: "Sudo Script installs"
+      become: yes
       ansible.builtin.shell: |
         ## unsupported dnf items ##
-        dnf group upgrade --with-optional Multimedia -y 
+        dnf group upgrade --with-optional Multimedia -y
 
+        ## change shell to fish shell
+        chsh -s /usr/bin/fish {{ ansible_user_id }}
+
+    - name: "User Script installs"
+      ansible.builtin.shell: |
         ## Install rustup ##
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
         curl -fsSL https://starship.rs/install.sh | sh -s -- -y
@@ -233,7 +245,8 @@
         source "$HOME/.cargo/env"
         cargo install bottom --locked
 
-    - name: "Include {{ work_file_name }} file if it exists"
+    - name: "Include {{ work_file_name }} tasks if it exists"
       ansible.builtin.include_tasks:
         file: "{{ work_file_name }}"
-      when: "work_file_name is file"
+      ignore_errors: true
+      # when: "work_file_name is file"
