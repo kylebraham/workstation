@@ -1,0 +1,20 @@
+---
+- hosts: localhost
+  tasks:
+    - name: "Ensure the (Nonfree) Nvidia repository is enabled"
+      become: yes
+      ansible.builtin.shell: |
+        dnf config-manager setopt rpmfusion-nonfree-nvidia-driver.enabled=1
+        
+    - name: "Install Nvidia Driver and CUDA"
+      become: yes
+      dnf:
+        name:
+          - akmod-nvidia
+          - xorg-x11-drv-nvidia-cuda
+          - nvidia-vaapi-driver 
+          - libva-utils 
+          - vdpauinfo
+          
+ ##########################################################################################
+

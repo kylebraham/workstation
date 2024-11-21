@@ -1,0 +1,165 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Core setup
+      become: yes
+      ansible.builtin.debug:
+        msg: Core setup
+
+    - name: Get fedora version
+      shell: rpm -E %fedora
+      register: fv
+    - set_fact: fedora_current={{ fv.stdout }}
+
+    ################################################################################
+    ######################## CREATE DIRS ###########################################
+    ################################################################################
+
+    - file:
+        path: /home/{{ ansible_user_id }}/{{ item }}
+        state: directory
+        mode: 0755
+      with_items:
+        - repos
+        - sandbox
+        - .local/share/fonts
+
+    ################################################################################
+    ######################## Add package repos #####################################
+    ################################################################################
+
+    - name: Install {{ fedora_current }} rpmfusion repo packages
+      become: yes
+      dnf:
+        name: "{{ item }}"
+        state: present
+        disable_gpg_check: true
+      with_items:
+        - https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedora_current }}.noarch.rpm
+        - https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedora_current }}.noarch.rpm
+
+
+    ################################################################################
+    ######################## DNF   #################################################
+    ################################################################################
+
+    - name: DNF upgrade all packages
+      become: yes
+      dnf:
+        name: "*"
+        state: latest
+
+    - name: Install the 'multimedia' package group
+      become: yes
+      dnf:
+        name: "@multimedia"
+        state: present
+        exclude: PackageKit-gstreamer-plugin
+        install_weak_deps: false
+
+    - name: Install the 'sound-and-video' package group
+      become: yes
+      dnf:
+        name: "@sound-and-video"
+        state: present
+
+    - name: DNF Install items
+      become: yes
+      dnf:
+        name:
+          - neovim
+          - ripgrep
+          - dnf-plugins-core
+          - python3-pip
+          - bat
+          - golang
+          - fedora-workstation-repositories
+          - gnome-tweak-tool
+          - xclip
+          - jq
+          - fzf
+          - fish
+          - buildah
+          - lsd
+          - NetworkManager
+          - git-delta
+          - direnv
+          - openssl
+          - openssl-devel
+          - restic
+          - util-linux-user
+          - just
+          - perf
+          
+        state: present
+
+    ################################################################################
+    ############################### GIT SETUP ######################################
+    ################################################################################
+
+    - git:
+        repo: "https://github.com/kylebraham/dotfiles.git"
+        dest: /home/{{ ansible_user_id }}/dotfiles
+
+    - community.general.git_config:
+        name: user.name
+        scope: global
+        value: "kylebraham"
+
+    - community.general.git_config:
+        name: user.email
+        scope: global
+        value: "polymorphic92@gmail.com"
+
+    ################################################################################
+    ########################  Flatpaks  ############################################
+    ################################################################################
+
+    - name: Add the flathub flatpak repository remote to the user installation
+      ansible.builtin.shell: flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
+
+    - name: Install Flatpaks
+      community.general.flatpak:
+        method: user
+        name:
+          - com.bitwarden.desktop
+          - org.wezfurlong.wezterm
+          - com.github.tchx84.Flatseal
+          - com.google.Chrome
+          - org.gnome.Extensions
+          - dev.zed.Zed
+
+    ################################################################################
+    ##########################  FONTS     ##########################################
+    ################################################################################
+
+    - name: "Download Nerd Font Complete"
+      become: yes
+      get_url:
+        url: "https://github.com/ryanoasis/nerd-fonts/blob/master/patched-fonts/DroidSansMono/DroidSansMNerdFont-Regular.otf"
+        dest: /usr/share/fonts/DroidSansMNerdFont-Regular.otf
+        mode: 0774
+
+    ################################################################################
+    ######################## RAW Script Installs ###################################
+    ################################################################################
+    - name: "Sudo Script installs"
+      become: yes
+      ansible.builtin.shell: |
+        dnf group upgrade --with-optional Multimedia -y
+        dnf config-manager setopt fedora-cisco-openh264.enabled=1
+
+
+    - name: "User Script installs"
+      ansible.builtin.shell: |
+        ## Install rustup ##
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+        curl -fsSL https://starship.rs/install.sh | sh -s -- -y
+
+        ## Install Papirus ##
+        wget -qO- https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh | sh
+        fc-cache -f -v
+
+        ## Install(s) via cargo ##
+        source "$HOME/.cargo/env"
+        cargo install bottom --locked
