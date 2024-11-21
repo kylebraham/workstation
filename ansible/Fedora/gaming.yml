@@ -1,0 +1,23 @@
+---
+- hosts: localhost
+  tasks:
+    - name: "Ensure the Steam repository is enabled"
+      become: yes
+      ansible.builtin.shell: |
+         dnf config-manager setopt rpmfusion-nonfree-steam.enabled=1
+         
+    - name: "Install Gaming related items"
+      become: yes
+      dnf:
+        name:
+          -  steam
+          -  goverlay
+          -  lutris
+          -  gamescope
+          
+    - name: Install Gaming related Flatpaks
+      community.general.flatpak:
+        method: user
+        name:
+          - com.discordapp.Discord
+          - net.davidotek.pupgui2
