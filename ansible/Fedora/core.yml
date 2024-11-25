@@ -38,7 +38,6 @@
         - https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedora_current }}.noarch.rpm
         - https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedora_current }}.noarch.rpm
 
-
     ################################################################################
     ######################## DNF   #################################################
     ################################################################################
@@ -90,16 +89,13 @@
           - util-linux-user
           - just
           - perf
-          
+          - stow
+
         state: present
 
     ################################################################################
     ############################### GIT SETUP ######################################
     ################################################################################
-
-    - git:
-        repo: "https://github.com/kylebraham/dotfiles.git"
-        dest: /home/{{ ansible_user_id }}/dotfiles
 
     - community.general.git_config:
         name: user.name
@@ -149,17 +145,28 @@
         dnf group upgrade --with-optional Multimedia -y
         dnf config-manager setopt fedora-cisco-openh264.enabled=1
 
-
-    - name: "User Script installs"
+    - name: "Install Starship Prompt"
       ansible.builtin.shell: |
-        ## Install rustup ##
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
         curl -fsSL https://starship.rs/install.sh | sh -s -- -y
 
-        ## Install Papirus ##
+    - name: "Install Papirus Icon Theme"
+      ansible.builtin.shell: |
         wget -qO- https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh | sh
         fc-cache -f -v
 
-        ## Install(s) via cargo ##
+    - name: "Install rustup"
+      ansible.builtin.shell: |
+        ## Install  ##
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+
+    - name: "Cargo Installs"
+      ansible.builtin.shell: |
         source "$HOME/.cargo/env"
+
         cargo install bottom --locked
+        cargo install zellij --locked
+        cargo install cargo-update
+        cargo install cargo-edit
+        cargo install cargo-generate
+        cargo install cargo-watch
+        cargo install flamegraph
