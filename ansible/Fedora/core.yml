@@ -77,6 +77,7 @@
           - gnome-tweak-tool
           - xclip
           - jq
+          - yq
           - fzf
           - fish
           - buildah
@@ -92,6 +93,9 @@
           - perf
           - stow
           - parallel
+          - hyperfine
+          - zig
+          - 
 
         state: present
 
@@ -126,7 +130,8 @@
           - com.google.Chrome
           - org.gnome.Extensions
           - dev.zed.Zed
-
+          - com.mastermindzh.tidal-hifi
+  
     ################################################################################
     ##########################  FONTS     ##########################################
     ################################################################################
